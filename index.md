@@ -1,7 +1,4 @@
-<title>K. Davidson</title>
-
 <body>Here are progress resports/updates and documentation on recent side project work.</body>
-<br>
 <body>Last update: February 1, 2021</body>
 
 <br>
