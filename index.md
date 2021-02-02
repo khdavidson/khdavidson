@@ -7,3 +7,5 @@
 <a href="chilko_smolts.html">Chilko smolt analysis summary</a>
 <br>
 <a href="calibration_doc.html">Calibration analysis summary</a>
+<br>
+<a href="arrival_timing_markdown.html">RSA supplemental information summaries</a>
