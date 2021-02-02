@@ -4,6 +4,6 @@
 <br>
 <br>
 <body>Files:</body>
-<a href="calibration_doc.html">Chilko smolt analysis summary</a>
+<a href="chilko_smolts.html">Chilko smolt analysis summary</a>
 <br>
 <a href="calibration_doc.html">Calibration analysis summary</a>
