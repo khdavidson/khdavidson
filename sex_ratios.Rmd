@@ -1,0 +1,84 @@
+---
+title: "Female proportion over time"
+date: "March 25, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Documents/ANALYSIS/data")
+
+library(tidyverse)
+library(xlsx)
+library(openxlsx)
+library(ggpubr)     # for stat_cor()
+
+data.raw <- read.xlsx("DFO Sockeye Escapement All Years (Feb 2021).xlsx")
+
+data <- data.raw %>%
+  rename(year=Year,
+    watershed_group=Watershed.Group.Name,
+    stock=`Stock.Name(stream)`,
+    timing_group=Timing.Group,
+    cu=CU.Name,
+    peak_spawn=spnpeak,
+    total=Total) %>% 
+  filter(stock%in%c("Forfar Creek", "Van Decar Creek", "O'Ne-ell Creek", "Stellako River", "Middle River", "Tachie River", 
+    "Horsefly River", "Horsefly River, lower", "Horsefly River, upper") | 
+      grepl(c("Mitchell"), stock) |
+      grepl(c("Weaver"), stock) |
+      grepl(c("Adams River, upper"), stock) |
+      grepl(c("Adams River, lower"), stock) |
+      cu %in% c("Chilko - Summer", "Shuswap Complex - Late"), year%in%c(1938:2012), !is.na(Estimate.Method),
+      !grepl("sex ratio", remarks), !grepl("Sex ratio", remarks), !grepl("sex", remarks)) %>% 
+  mutate_at(c("watershed_group", "stock", "cu"), as.factor) %>%
+  mutate(region_group = ifelse(cu=="Shuswap Complex - Late", "Late Shuswap", 
+    ifelse(cu == "Chilko - Summer", "Chilko",
+      ifelse(stock=="Stellako River", "Stellako",
+        ifelse(stock=="Forfar Creek", "EStu - Forfar", 
+          ifelse(stock=="Van Decar Creek", "EStu - Van Decar", 
+            ifelse(stock=="O'Ne-ell Creek", "EStu - O'Ne-ell",
+              ifelse(grepl("Horsefly", stock), "Horsefly", 
+                ifelse(grepl("Mitchell", stock), "Mitchell", 
+                  ifelse(grepl("Weaver", stock), "Weaver", 
+                    ifelse(grepl("Adams", stock), "Adams", 
+                      ifelse(stock=="Middle River", "LStu - Middle", 
+                        ifelse(stock=="Tachie River", "LStu - Tachie", ""))))))))))))) %>%
+  print()
+```
+
+
+Assessing proportion of females (**not** effective females) over time for focal populations. Comparison to Hinch et al (in press) Figure 2.
+```{r include=F, echo=F}
+summary.table <- data %>% 
+  group_by(year, region_group) %>%
+  summarize(total_fem = sum(females), total_pop=sum(males+females)) %>%
+  mutate(propn_fem = total_fem/total_pop) %>%
+  mutate_at("region_group", as.factor) %>%
+  print()
+```
+
+```{r warning=F, message=F, echo=F}
+summary.table$region_group <- factor(summary.table$region_group, levels=c("EStu - Forfar", "EStu - O'Ne-ell", "EStu - Van Decar", "Chilko", "Horsefly", "Mitchell", "Stellako", "LStu - Middle", "LStu - Tachie", "Weaver", "Adams", "Late Shuswap"), ordered=T)
+
+ggplot(summary.table, aes(x=year, y=propn_fem)) +
+  geom_hline(yintercept = 0.5, linetype="dashed") +
+  stat_smooth(method="lm") +
+  geom_point() +
+  scale_y_continuous(limits=c(0,0.75), breaks=seq(0,0.75,by=0.25)) +
+  labs(y="% Female", x="") +
+  theme_bw() +
+  facet_wrap(~region_group, nrow=4) +
+  stat_cor(aes(label=..r.label..), size=3, label.y=c(0.3,0.3), label.x=c(1960,1940)) +
+  stat_cor(aes(label=..p.label..), size=3, label.y=c(0.2,0.2), label.x=c(1960,1940)) #+
+  #geom_text(data=subset(summary.table, propn_fem < 0.4), aes(x=year, y=propn_fem, label=year), size=3, hjust=-0.2, yjust=0.02, angle=45)
+```
+
+*Fig. Change in the proportion of females composing the adult only (no jack) population each year for 12 main Fraser River stocks from 1938-2012. Cases with surrogate or composite sex ratios were excluded, as were spawning channels.* 
+
+
+
+
+
+
+
