@@ -1,5 +1,5 @@
 ---
-title: "**Northern sockeye smolt programs  \nIn-season update #2**"
+title: "**Northern sockeye smolt programs  \nIn-season update #4**"
 author: "Fraser Interior Area Sockeye Stock Assessment"
 date: "`r Sys.Date()`"
 output: 
@@ -20,83 +20,90 @@ library(chron)  # for times() (not used)
 
 setwd("~/Data/# In-season 2021")
 
-stellako.catch <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="nightly_catch")
-stellako.enviro <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="environmentals", detectDates=T)
-stellako.bio <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="biosampling", detectDates=T)
-stellako.lf <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="length_frequency", detectDates=T)
+stellako.catch.raw <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="nightly_catch")
+stellako.enviro.raw <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="environmentals", detectDates=T)
+stellako.bio.raw <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="biosampling", detectDates=T)
+stellako.lf.raw <- read.xlsx("stellako_data_entry_2021.xlsx", sheet="length_frequency", detectDates=T)
 
-nadleh.catch <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="nightly_catch")
-nadleh.enviro <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="environmentals", detectDates=T)
-nadleh.bio <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="biosampling", detectDates=T)
-nadleh.lf <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="length_frequency", detectDates=T)
+nadleh.catch.raw <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="nightly_catch")
+nadleh.enviro.raw <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="environmentals", detectDates=T)
+nadleh.bio.raw <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="biosampling", detectDates=T)
+nadleh.lf.raw <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="length_frequency", detectDates=T)
 
-# clean formats
-stellako.catch <- stellako.catch %>%
-  mutate(date_opened = as.Date(stellako.catch$date_opened, origin="1899-12-30")) %>% 
-  mutate(date_closed = as.Date(stellako.catch$date_closed, origin="1899-12-30")) %>% 
-  mutate(date_true = as.Date(stellako.catch$date_true, origin="1899-12-30")) %>% 
+
+#------- STELLAKO CLEANED
+# Catch
+stellako.catch <- stellako.catch.raw %>%
   filter(!is.na(date_closed)) %>%
+  mutate(date_opened = as.Date(date_opened, origin="1899-12-30")) %>% 
+  mutate(date_closed = as.Date(date_closed, origin="1899-12-30")) %>% 
+  mutate(date_true = as.Date(date_true, origin="1899-12-30")) %>% 
+  mutate(date_time = as.POSIXct(paste(date_true, time_trap_closed), format="%Y-%m-%d %H:%M")) %>%
+  mutate(date_time_rounded = format(round(date_time, units="hours"), format="%H:%M")) %>%
+  filter(date_time_rounded%in%c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00")) %>%
+  mutate(total_recaps = ifelse(is.na(total_recaps), 0, total_recaps)) %>%
   print()
-stellako.catch$time_trap_closed <- factor(stellako.catch$time_trap_closed, levels=c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00"), ordered=T)
+stellako.catch$date_time_rounded <- factor(stellako.catch$date_time_rounded, levels=c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00"), ordered=T) 
 
-stellako.bio$time_trap_closed <- factor(stellako.bio$time_trap_closed, levels=c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00"), ordered=T)
-
-stellako.lf <- stellako.lf %>%
+# Length-freq
+stellako.lf <- stellako.lf.raw %>%
   filter(!is.na(date_closed)) %>%
-  mutate(date_opened = as.Date(stellako.lf$date_opened, origin="1899-12-30")) %>% 
-  mutate(date_closed = as.Date(stellako.lf$date_closed, origin="1899-12-30")) %>% 
+  mutate(date_opened = as.Date(date_opened, origin="1899-12-30")) %>% 
+  mutate(date_closed = as.Date(date_closed, origin="1899-12-30")) %>% 
   print()
 
-stellako.enviro <- stellako.enviro %>%
+# Environmentals
+stellako.enviro <- stellako.enviro.raw %>%
   rename(date_opened=date.opened,
          date_closed=date.closed,
-         date_true=date.true)
+         date_true=date.true) %>%
+  mutate(date_time = as.POSIXct(paste(date_closed, time), format="%Y-%m-%d %H:%M"))
 
 
-nadleh.catch <- nadleh.catch %>%
-  mutate(date_opened = as.Date(nadleh.catch$date_opened, origin="1899-12-30")) %>% 
-  mutate(date_closed = as.Date(nadleh.catch$date_closed, origin="1899-12-30")) %>% 
-  mutate(date_true = as.Date(nadleh.catch$date_true, origin="1899-12-30")) %>% 
+#------- NADLEH CLEANED
+# Catch
+nadleh.catch <- nadleh.catch.raw %>%
   filter(!is.na(date_closed)) %>%
+  mutate(date_opened = as.Date(date_opened, origin="1899-12-30")) %>% 
+  mutate(date_closed = as.Date(date_closed, origin="1899-12-30")) %>% 
+  mutate(date_true = as.Date(date_true, origin="1899-12-30")) %>% 
+  mutate(date_time = as.POSIXct(paste(date_true, time_trap_closed), format="%Y-%m-%d %H:%M")) %>%
+  mutate(date_time_rounded = format(round(date_time, units="hours"), format="%H:%M")) %>%
+  filter(date_time_rounded%in%c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00")) %>%
+  mutate(total_recaps = ifelse(is.na(total_recaps), 0, total_recaps)) %>%
   print()
-nadleh.catch$time_trap_closed <- factor(nadleh.catch$time_trap_closed, levels=c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00"), ordered=T)
+nadleh.catch$date_time_rounded <- factor(nadleh.catch$date_time_rounded, levels=c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00"), ordered=T)
 
-nadleh.bio$time_trap_closed <- factor(nadleh.bio$time_trap_closed, levels=c("21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00"), ordered=T)
-
-nadleh.lf <- nadleh.lf %>%
-  mutate(date_opened = as.Date(nadleh.lf$date_opened, origin="1899-12-30")) %>% 
-  mutate(date_closed = as.Date(nadleh.lf$date_closed, origin="1899-12-30")) %>% 
+# Length-freq
+nadleh.lf <- nadleh.lf.raw %>%
+  mutate(date_opened = as.Date(date_opened, origin="1899-12-30")) %>% 
+  mutate(date_closed = as.Date(date_closed, origin="1899-12-30")) %>% 
   print()
 
-nadleh.enviro <- nadleh.enviro %>%
+# Environmentals
+nadleh.enviro <- nadleh.enviro.raw %>%
   rename(date_opened=date.opened,
          date_closed=date.closed,
-         date_true=true.date)
+         date_true=true.date) %>% 
+  mutate(date_time = as.POSIXct(paste(date_closed, time), format="%Y-%m-%d %H:%M"))
 
 
 
-#----------- TABLE functions
 
+#############
+# FUNCTIONS #
+#############
 # better expand frequency table function: 
 # expand.dft(nadleh.lf, var.names=c("site", "date_opened", "date_closed", "crew", "trap_type", "data_type", "length_mm"), freq="count")
 
-summary_fx <- function(site_data){
-  site_data %>%
-    filter(!is.na(time_trap_closed)) %>%
-    group_by(date_closed, time_trap_closed) %>%
-    summarize(hour_count = sum(n_unmarked_sampled)) %>%
-    mutate(propn=hour_count/sum(hour_count)) %>%
-    mutate(propn=ifelse(is.nan(propn), NA, propn)) %>%
-    group_by(time_trap_closed) %>% 
-    summarize(avg_propn = mean(propn, na.rm=T), sd=sd(propn, na.rm=T)) %>%
-    mutate(sd=ifelse(is.na(sd),0,sd))
-}
 
-nightly_fx <- function(data) {
-  data %>% 
-    filter(!is.na(time_trap_closed)) %>%
+#----------- EXCEL FILE functions
+# Total catch by night, based on trap closed date - EXCEL and FIGURE
+nightly_fx <- function(catch_data) {
+  catch_data %>% 
+    filter(!is.na(time_trap_closed), location != "Release Location") %>%
     group_by(date_closed) %>%
-    summarize(night_count = sum(n_unmarked_sampled+n_unmarked_dead+n_unmarked_spilled)) %>%
+    summarize(night_count = sum(total_unmarked+total_recaps, na.rm=T)) %>%
     rename(Date=date_closed,
      `Nightly total`=night_count) %>%
     #mutate(Table = n) %>%
@@ -104,33 +111,47 @@ nightly_fx <- function(data) {
     select(Date, `Nightly total`) 
 }
 
-
-
-nightly_plot_fx <- function(catch_data){
+# Total catch by hour, based on trap closed date and time out of live box (i.e., trap closed time which is where date_time_rounded comes from) - EXCEL 
+hourly_fx <- function(catch_data) {
   catch_data %>% 
-    filter(!is.na(time_trap_closed)) %>%
-    group_by(date_closed) %>%
-    summarize(night_count = sum(n_unmarked_sampled+n_unmarked_spilled+n_unmarked_dead))
-}
-
-
-
-hourly_fx <- function(data) {
-  data %>% 
-    filter(!is.na(time_trap_closed)) %>%
-    group_by(date_true, time_trap_closed) %>%
-    summarize(hour_count = sum(n_unmarked_sampled)) %>%
-    mutate(date_time = as.POSIXct(paste(date_true, time_trap_closed))) %>%
+    filter(!is.na(time_trap_closed), location != "Release Location") %>%
+    group_by(date_true, date_time_rounded) %>%
+    summarize(hour_count = sum(total_unmarked+total_recaps, na.rm=T)) %>%
+    mutate(date_time = as.POSIXct(paste(date_true, date_time_rounded), format="%Y-%m-%d %H:%M")) %>%
     arrange(date_time) %>%
     rename(Date=date_true,
-     Time=time_trap_closed,
+     Time=date_time_rounded,
      `Hourly total`=hour_count,
      `Date-time`=date_time) %>%
-    #mutate(Table = n) %>%
     ungroup() %>%
-    #mutate(Table = replace(Table, 2:length(Table), "")) %>%    
     select(Date, Time, `Date-time`, `Hourly total`) 
+    #mutate(Table = n) %>%
+    #mutate(Table = replace(Table, 2:length(Table), ""))     
 }
+
+# Proportion by hour, based on trap closed date and time out of live box (i.e., trap closed time which is where date_time_rounded comes from) - FIGURE
+propn_fx <- function(site_data){
+  site_data %>%
+    filter(!is.na(date_closed), location != "Release Location") %>%
+    group_by(date_closed, date_time_rounded) %>%
+    summarize(hour_count = sum(total_unmarked+total_recaps, na.rm=T)) %>%
+    mutate(propn=hour_count/sum(hour_count)) %>%
+    mutate(propn=ifelse(is.nan(propn), NA, propn)) %>%
+    group_by(date_time_rounded) %>% 
+    summarize(avg_propn = mean(propn, na.rm=T), sd=sd(propn, na.rm=T)) %>%
+    mutate(sd=ifelse(is.na(sd),0,sd)) %>%
+    ungroup()
+}
+
+# Environmental data function for within plot 
+enviro_fx <- function(enviro_data){
+  enviro_data%>%
+    filter(!is.na(water_temp_C), location!="Release Location", rst_rpms>0, !grepl("day shift", comments)) %>%
+    group_by(date_closed) %>%
+    summarize(min_time = min(date_time), water_temp_C, water_gauge_m)
+}
+
+
 
 
 
@@ -139,12 +160,12 @@ scaleFUN <- function(x) sprintf("%.1f", x)
 
 enviro_plot <- function(site_data, span_val){
   ggplot() +
-    geom_smooth(data=site_data%>%filter(!is.na(water_temp_C)), aes(x=date_opened, y=water_temp_C), size=1, colour="orange", se=F, span=span_val) +
-    geom_smooth(data=site_data, aes(x=date_opened, y=water_gauge_m), size=1, colour="blue", se=F, span=span_val) +
-    geom_point(data=site_data%>%filter(!is.na(water_temp_C)), aes(x=date_opened, y=water_temp_C), size=3.5, shape=21, fill="#FFBB19", colour="#FF8100") +
-    geom_point(data=site_data, aes(x=date_opened, y=water_gauge_m), size=3.5, shape=21, fill="#539bff", colour="#531eff") +
+    geom_smooth(data=enviro_fx(site_data), aes(x=date_closed, y=water_temp_C), size=1, colour="orange", se=F, span=span_val) +
+    geom_smooth(data=enviro_fx(site_data), aes(x=date_closed, y=water_gauge_m), size=1, colour="blue", se=F, span=span_val) +
+    geom_point(data=enviro_fx(site_data), aes(x=date_closed, y=water_temp_C), size=3.5, shape=21, fill="#FFBB19", colour="#FF8100") +
+    geom_point(data=enviro_fx(site_data), aes(x=date_closed, y=water_gauge_m), size=3.5, shape=21, fill="#539bff", colour="#531eff") +
     scale_y_continuous(labels=scaleFUN, name="Water temperature (C)", sec.axis = sec_axis(~., name="Water level (m)", labels=scaleFUN)) +
-    scale_x_date(date_breaks ="2 day", date_labels = "%b %d") +
+    scale_x_date(date_breaks ="3 day", date_labels = "%b %d") +
     labs(x="Date") +
     theme_bw() +
     theme(axis.text = element_text(colour="black", size=9),
@@ -154,16 +175,14 @@ enviro_plot <- function(site_data, span_val){
       axis.title.x = element_text(face="bold", size=11, margin=margin(t=10, r=0, b=0, l=0)))
 }
 
+
 nightly_plot <- function(catch_data, max_catch, interval){
-  ggplot(data=catch_data %>% 
-                filter(!is.na(time_trap_closed)) %>%
-                group_by(date_closed) %>%
-                summarize(night_count = sum(n_unmarked_sampled+n_unmarked_spilled+n_unmarked_dead)), 
-      aes(x=date_closed, y=night_count)) +
+  ggplot(data=nightly_fx(catch_data), 
+      aes(x=Date, y=`Nightly total`)) +
     #annotate(geom="text", x=as.Date("2021-04-12"), y=max_catch, label="A", size=5) +
     geom_bar(stat="identity", colour="black", fill="gray70", width=1) +
     scale_y_continuous(breaks=seq(0,max_catch,by=interval), limits=c(0,max_catch)) +
-    scale_x_date(date_breaks="1 day", date_labels="%b %d") +   #limits=c(as.Date("2021-04-12"), as.Date("2021-04-30")), 
+    scale_x_date(date_breaks="2 day", date_labels="%b %d") +   #limits=c(as.Date("2021-04-12"), as.Date("2021-04-30")), 
     labs(x="Date", y="Total nightly catch") +
     theme_bw() +
     theme(axis.text = element_text(colour="black", size=9),
@@ -173,7 +192,7 @@ nightly_plot <- function(catch_data, max_catch, interval){
 }
 
 hourly_plot <- function(site_data){
-  ggplot(data=summary_fx(site_data), aes(x=time_trap_closed, y=avg_propn, group=1)) +
+  ggplot(data=propn_fx(site_data), aes(x=date_time_rounded, y=avg_propn, group=1)) +
     geom_ribbon(aes(ymin=avg_propn-sd, ymax=avg_propn+sd), fill="gray85", alpha=0.7) +
     geom_line(size=1, colour="black") +
     geom_point(size=3.5, shape=21, colour="black", fill="gray40") +
@@ -200,7 +219,7 @@ Two pilot smolt programs are occurring in the upper Fraser River watershed durin
 
 The Stellako River is considered the upstream site and is expected to encounter mostly Nadina sockeye smolts as they exit Francois Lake and travel through Stellako River into Fraser Lake (and beyond). The Stellako program is a collaboration between Carrier Sekani Tribal Council (CSTC) and DFO. The Nadleh river is considered the downstream site and is expected to encounter both Nadina and Stellako sockeye smolts as they exit the Francois-Fraser Lakes system and travel through the Nadleh River on the way to the Nechako River (and beyond). The Nadleh program is a collaboration between Nadleh Whut'en First Nation, the Upper Fraser Fisheries Conservation Alliance (UFFCA), and DFO.
 
-By conducting two programs on the same system, and collecting complementary data at both locations, we will learn more about smolt travel times, growth dynamics, and stock composition at both locations. Work at both locations occurs nightly from 8:00pm (20:00) to 4:00am (04:00). Traps are checked hourly, allowing for approximately 1-hour fishing intervals (trap checks occur at 21:00, 22:00, 23:00, 00:00, 01:00, 02:00 and 03:00). Smolts encountered are sampled for length, weight, scales (for age), and DNA (for genetic stock identification [GSI] between the Nadina and Stellako populations). Age and GSI results will not be available until the post-season, therefore only length and weight data are reported in this update. DNA samples are obtained from an upper caudal fin clip at Stellako and a lower caudal fin clip at Nadleh.
+By conducting two programs on the same system, and collecting complementary data at both locations, we will learn more about smolt travel times, growth dynamics, and stock composition at both locations. Work at both locations occurs nightly from 8:00pm (20:00) to 4:00am (04:00). Traps are checked hourly, allowing for approximately 1-hour fishing intervals (trap checks occured at 21:00, 22:00, 23:00, 00:00, 01:00, 02:00 and 03:00 until May 2, at which point checks shifted an hour later to occur hourly from 22:00 to 04:00). Smolts encountered are sampled for length, weight, scales (for age), and DNA (for genetic stock identification [GSI] between the Nadina and Stellako populations). Age and GSI results will not be available until the post-season, therefore only length and weight data are reported in this update. DNA samples are obtained from an upper caudal fin clip at Stellako and a lower caudal fin clip at Nadleh.
 
 &nbsp;
 
@@ -210,8 +229,6 @@ By conducting two programs on the same system, and collecting complementary data
 
 # **Stellako smolt update**   
 
-&nbsp;
-
 **Operations**
 
 The Stellako site is using a 6' Rotary Screw Trap (RST) located in the lower portion of the river at the adult sonar enumeration site and was operational April 11. The first night was a partial shift with four trap checks at 22:00, 23:00, 00:00 and 01:00. Following April 11, crews are following the full night shift schedule (see above for details). The Stellako crew currently consists of 2-3 CSTC Fisheries staff (on a rotating schedule) and 1-2 DFO staff. 
@@ -220,10 +237,10 @@ The Stellako site is using a 6' Rotary Screw Trap (RST) located in the lower por
 
 **Environmentals**
 
-Water temperatures are still cold in the Stellako River, on average `r round(mean(stellako.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_temp_C,na.rm=T),1)` &deg;C (Figure 1), as are air temperatures (`r round(mean(stellako.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have increased considerably since RST install (average of `r round(mean(stellako.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_gauge_m,na.rm=T),2)` m), resulting in flooding of most of the lower river channels (Figure 1).
+Water temperatures are still cold in the Stellako River, on average `r round(mean(stellako.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_temp_C,na.rm=T),1)` &deg;C (Figure 1), as are air temperatures (`r round(mean(stellako.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have increased considerably since RST install (average of `r round(mean(stellako.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_gauge_m,na.rm=T),2)` m), resulting in flooding of most of the lower river channels (Figure 1). The decline on April 27 is likely an effect of Francois Lake buffering the water gauge reading, which is at the top of the Stellako River near Glenannan. 
 
 ```{r, message=F, echo=F, warning=F}
-enviro_plot(stellako.enviro, 0.33)
+enviro_plot(stellako.enviro, 0.2)
 ```
 
 *Figure 1. Water temperature (degrees Celcius) and level (meters) in the Stellako River from `r format(min(stellako.enviro$date_opened), "%b %d")` to `r format(max(stellako.enviro$date_opened), "%b %d")`, 2021. Water level data obtained from real-time Environment Canada water data online.*
@@ -232,19 +249,39 @@ enviro_plot(stellako.enviro, 0.33)
 
 **Abundance and migration timing**
 
-Catches are still low at Stellako, with no new smolts encountered since last update (Figure 2a). Smolt migration is anticipated to be closer to early-mid May. Catches are currently too low to discern reliable hourly abundance patterns (Figure 2b), but historical data suggest peak migration should occur between 23:00-02:00. 
+Catches are finally increasing at Stellako (Figure 2a). Smolt migration is anticipated to around early-mid May. Variability in hourly catch is still high, but so far suggests that smolts migrate later in the night at Stellako than at Nadleh (Figure 2b). 
 
 ```{r, warning=F, message=F, echo=F}
-ggarrange(nightly_plot(stellako.catch, 10, 1), hourly_plot(stellako.catch), nrow=2)
+ggarrange(nightly_plot(stellako.catch, 300, 50), hourly_plot(stellako.catch), nrow=2)
 ```
 
 *Figure 2. Stellako River a) total nightly sockeye smolt catch over time, not corrected for effort. b) Sub-sample of the proportion of sockeye smolts composing each hourly catch averaged across days fished (`r format(min(stellako.catch$date_closed), "%b %d")` - `r format(max(stellako.catch$date_closed), "%b %d")`, 2021). Shading represents standard deviation. Catch times are given based on when smolts were removed from the RST live box. Dates are given based on when the RST was closed.*
 
 &nbsp;
 
+&nbsp;
+
 **Biological data**
 
-Smolts encountered at the Stellako River site are large, on average `r round(mean(stellako.bio$length_mm,na.rm=T),1)`&pm;`r round(sd(stellako.bio$length_mm, na.rm=T),1)` mm and `r round(mean(stellako.bio$weight_g,na.rm=T),1)`&pm;`r round(sd(stellako.bio$weight_g,na.rm=T),1)` g. 
+Smolts encountered at the Stellako River site are getting larger, on average `r round(mean(stellako.bio.raw$length_mm,na.rm=T),1)`&pm;`r round(sd(stellako.bio.raw$length_mm, na.rm=T),1)` mm and `r round(mean(stellako.bio.raw$weight_g,na.rm=T),1)`&pm;`r round(sd(stellako.bio.raw$weight_g,na.rm=T),1)` g. 
+
+\newpage
+
+**Mark-recapture release cohorts** 
+
+Mark-recapture trials to evaluate trap efficiency have begun at Stellako (Table 1).
+
+&nbsp;
+
+*Table 1. Mark-release cohorts released on the Stellako River*
+```{r, echo=F, warning=F, message=F}
+stella.releases <- data.frame(Date=c("May 5"), cohort_size=c(114), mark_type=c("Upper caudal clip"))
+stella.releases <- stella.releases %>%
+  rename(`Cohort size`=cohort_size,
+         `Mark type`=mark_type)
+
+knitr::kable(stella.releases)
+```
 
 &nbsp;
 
@@ -254,8 +291,6 @@ Smolts encountered at the Stellako River site are large, on average `r round(mea
 
 # **Nadleh smolt update** 
 
-&nbsp;
-
 **Operations**
 
 The Nadleh program is using an 8' RST located at the Nadleh bridge, about half-way down the river (above the rapids) and was operational April 10. The first night was a partial shift with three trap checks at 23:00, 00:00 and 01:00. Following April 11, crews are working the full night shift (see above for details). The Nadleh crew currently consists of 2-3 Nadleh Whut'en staff (on a rotational shift) and 1-2 DFO staff. 
@@ -264,10 +299,10 @@ The Nadleh program is using an 8' RST located at the Nadleh bridge, about half-w
 
 **Environmentals**
 
-Water temperatures have increased in the Nadleh River, but are still cold, on average `r round(mean(nadleh.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_temp_C,na.rm=T),1)` &deg;C, as are air temperatures (`r round(mean(nadleh.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have also increased (average of `r round(mean(nadleh.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_gauge_m,na.rm=T),2)` m, Figure 3). Ice has now completely left Fraser Lake and no longer impacts RST operations. 
+Water temperatures increasing steadily in the Nadleh River, on average `r round(mean(nadleh.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_temp_C,na.rm=T),1)` &deg;C, as are air temperatures (`r round(mean(nadleh.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have also increased (average of `r round(mean(nadleh.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_gauge_m,na.rm=T),2)` m, Figure 3). Ice has now completely left Fraser Lake and no longer impacts RST operations. 
 
 ```{r, message=F, echo=F, warning=F}
-enviro_plot(nadleh.enviro, 0.30)
+enviro_plot(nadleh.enviro, 0.2)
 ```
 
 *Figure 3. Water temperature (degrees Celcius) and level (meters) in the Nadleh River from `r format(min(nadleh.enviro$date_opened), "%b %d")` to `r format(max(nadleh.enviro$date_opened), "%b %d")`, 2021. Water level data obtained from real-time Environment Canada water data online.*
@@ -279,16 +314,36 @@ enviro_plot(nadleh.enviro, 0.30)
 Catches have increased dramatically at Nadleh as the anticipated peak of migration approaches, estimated to be mid-late Apr but potentially as late as mid-May (Figure 4a). Peak nightly migration appears to be between 10pm and 1am, as it has been historically (Figure 4b). 
 
 ```{r, warning=F, message=F, echo=F}
-ggarrange(nightly_plot(nadleh.catch, 4000, 500), hourly_plot(nadleh.catch), nrow=2)
+ggarrange(nightly_plot(nadleh.catch, 7000, 1000), hourly_plot(nadleh.catch), nrow=2)
 ```
 
 *Figure 4. Nadleh River a) total nightly sockeye smolt catch over time, not corrected for effort. b) Sub-sample of the proportion of sockeye smolts composing each hourly catch averaged across days fished (`r format(min(nadleh.catch$date_closed), "%b %d")` - `r format(max(nadleh.catch$date_closed), "%b %d")`, 2021). Shading represents standard deviation. Catch times are given based on when smolts were removed from the RST live box. Dates are given based on when the RST was closed.*
 
 &nbsp;
 
+&nbsp;
+
 **Biological data**
 
-Smolts encountered at the Nadleh River are slightly larger than those caught at Stellako, on average `r round(mean(nadleh.bio$length_mm,na.rm=T),1)`&pm;`r round(sd(nadleh.bio$length_mm, na.rm=T),1)` mm and `r round(mean(nadleh.bio$weight_g,na.rm=T),1)`&pm;`r round(sd(nadleh.bio$weight_g,na.rm=T),1)` g. 
+Smolts encountered at the Nadleh River are slightly smaller than those caught at Stellako, on average `r round(mean(nadleh.bio.raw$length_mm,na.rm=T),1)`&pm;`r round(sd(nadleh.bio.raw$length_mm, na.rm=T),1)` mm and `r round(mean(nadleh.bio.raw$weight_g,na.rm=T),1)`&pm;`r round(sd(nadleh.bio.raw$weight_g,na.rm=T),1)` g. 
+
+\newpage
+
+**Mark-recapture release cohorts** 
+
+Mark-recapture trials to evaluate trap efficiency have begun at Nadleh and will continue as long as smolt abundance lasts (Table 2).
+
+&nbsp;
+
+*Table 2. Mark-release cohorts released on the Stellako River*
+```{r, echo=F, warning=F, message=F}
+nadleh.releases <- data.frame(Date=c("April 28", "May 1"), cohort_size=c(421, 1220), mark_type="Lower caudal clip")
+nadleh.releases <- nadleh.releases %>%
+  rename(`Cohort size`=cohort_size,
+         `Mark type`=mark_type)
+
+knitr::kable(nadleh.releases)
+```
 
 &nbsp;
 
@@ -300,7 +355,7 @@ Smolts encountered at the Nadleh River are slightly larger than those caught at 
 
 &nbsp;
 
-Next update will be: `r Sys.Date()+3`
+Next update will be: `r Sys.Date()+7`
 
 ```{r echo=F, warning=F, message=F, include=F}
 #*Table 1. Stellako River a) raw nightly sockeye smolt catch. Dates are based on the day the trap was closed for fishing. b) Raw hourly abundance of sockeye #smolts. Times are based on when fish were netted out of the RST live box.*
@@ -339,7 +394,7 @@ writeData(northern_wb, sheet="Stellako hourly", x=stellako.hourly.summary)
 writeData(northern_wb, sheet="Nadleh nightly", x=nadleh.nightly.summary)
 writeData(northern_wb, sheet="Nadleh hourly", x=nadleh.hourly.summary)
 
-saveWorkbook(northern_wb, "Northern sockeye smolt programs 2021 - In-season data update #2.xlsx", overwrite = T)
+saveWorkbook(northern_wb, "Northern sockeye smolt programs 2021 - In-season data update #4.xlsx", overwrite = T)
 ```
 
 
