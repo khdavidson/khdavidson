@@ -335,7 +335,7 @@ Mark-recapture trials to evaluate trap efficiency have begun at Nadleh and will 
 
 &nbsp;
 
-*Table 2. Mark-release cohorts released on the Stellako River*
+*Table 2. Mark-release cohorts released on the Nadleh River*
 ```{r, echo=F, warning=F, message=F}
 nadleh.releases <- data.frame(Date=c("April 28", "May 1"), cohort_size=c(421, 1220), mark_type="Lower caudal clip")
 nadleh.releases <- nadleh.releases %>%
