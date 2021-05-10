@@ -1,5 +1,5 @@
 ---
-title: "**Northern sockeye smolt programs  \nIn-season update #4**"
+title: "**Northern sockeye smolt programs  \nIn-season update #5**"
 author: "Fraser Interior Area Sockeye Stock Assessment"
 date: "`r Sys.Date()`"
 output: 
@@ -34,7 +34,7 @@ nadleh.lf.raw <- read.xlsx("nadleh_data_entry_2021.xlsx", sheet="length_frequenc
 #------- STELLAKO CLEANED
 # Catch
 stellako.catch <- stellako.catch.raw %>%
-  filter(!is.na(date_closed)) %>%
+  filter(!is.na(date_closed), is.na(mark_type), !grepl("day shift", comments)) %>%
   mutate(date_opened = as.Date(date_opened, origin="1899-12-30")) %>% 
   mutate(date_closed = as.Date(date_closed, origin="1899-12-30")) %>% 
   mutate(date_true = as.Date(date_true, origin="1899-12-30")) %>% 
@@ -63,7 +63,7 @@ stellako.enviro <- stellako.enviro.raw %>%
 #------- NADLEH CLEANED
 # Catch
 nadleh.catch <- nadleh.catch.raw %>%
-  filter(!is.na(date_closed)) %>%
+  filter(!is.na(date_closed), is.na(mark_type), !grepl("day shift", comments)) %>%
   mutate(date_opened = as.Date(date_opened, origin="1899-12-30")) %>% 
   mutate(date_closed = as.Date(date_closed, origin="1899-12-30")) %>% 
   mutate(date_true = as.Date(date_true, origin="1899-12-30")) %>% 
@@ -162,8 +162,8 @@ enviro_plot <- function(site_data, span_val){
   ggplot() +
     geom_smooth(data=enviro_fx(site_data), aes(x=date_closed, y=water_temp_C), size=1, colour="orange", se=F, span=span_val) +
     geom_smooth(data=enviro_fx(site_data), aes(x=date_closed, y=water_gauge_m), size=1, colour="blue", se=F, span=span_val) +
-    geom_point(data=enviro_fx(site_data), aes(x=date_closed, y=water_temp_C), size=3.5, shape=21, fill="#FFBB19", colour="#FF8100") +
-    geom_point(data=enviro_fx(site_data), aes(x=date_closed, y=water_gauge_m), size=3.5, shape=21, fill="#539bff", colour="#531eff") +
+    geom_point(data=enviro_fx(site_data), aes(x=date_closed, y=water_temp_C), size=3.3, shape=21, fill="#FFBB19", colour="#FF8100") +
+    geom_point(data=enviro_fx(site_data), aes(x=date_closed, y=water_gauge_m), size=3.3, shape=21, fill="#539bff", colour="#531eff") +
     scale_y_continuous(labels=scaleFUN, name="Water temperature (C)", sec.axis = sec_axis(~., name="Water level (m)", labels=scaleFUN)) +
     scale_x_date(date_breaks ="3 day", date_labels = "%b %d") +
     labs(x="Date") +
@@ -219,7 +219,7 @@ Two pilot smolt programs are occurring in the upper Fraser River watershed durin
 
 The Stellako River is considered the upstream site and is expected to encounter mostly Nadina sockeye smolts as they exit Francois Lake and travel through Stellako River into Fraser Lake (and beyond). The Stellako program is a collaboration between Carrier Sekani Tribal Council (CSTC) and DFO. The Nadleh river is considered the downstream site and is expected to encounter both Nadina and Stellako sockeye smolts as they exit the Francois-Fraser Lakes system and travel through the Nadleh River on the way to the Nechako River (and beyond). The Nadleh program is a collaboration between Nadleh Whut'en First Nation, the Upper Fraser Fisheries Conservation Alliance (UFFCA), and DFO.
 
-By conducting two programs on the same system, and collecting complementary data at both locations, we will learn more about smolt travel times, growth dynamics, and stock composition at both locations. Work at both locations occurs nightly from 8:00pm (20:00) to 4:00am (04:00). Traps are checked hourly, allowing for approximately 1-hour fishing intervals (trap checks occured at 21:00, 22:00, 23:00, 00:00, 01:00, 02:00 and 03:00 until May 2, at which point checks shifted an hour later to occur hourly from 22:00 to 04:00). Smolts encountered are sampled for length, weight, scales (for age), and DNA (for genetic stock identification [GSI] between the Nadina and Stellako populations). Age and GSI results will not be available until the post-season, therefore only length and weight data are reported in this update. DNA samples are obtained from an upper caudal fin clip at Stellako and a lower caudal fin clip at Nadleh.
+By conducting two programs on the same system, and collecting complementary data at both locations, we will learn more about smolt travel times, growth dynamics, and stock composition at both locations. Work at both locations occurs nightly from 8:00pm (20:00) to 4:00am (04:00). Traps are checked hourly, allowing for approximately 1-hour fishing intervals (trap checks occured at 21:00, 22:00, 23:00, 00:00, 01:00, 02:00 and 03:00 until May 2, at which point checks shifted an hour later to occur hourly from 22:00 to 04:00). Daily fishing is also occurring but only nightly abundance is reported in this update. Smolts encountered are sampled for length, weight, scales (for age), and DNA (for genetic stock identification [GSI] between the Nadina and Stellako populations). Age and GSI results will not be available until the post-season, therefore only length and weight data are reported in this update. DNA samples are obtained from an upper caudal fin clip at Stellako and a lower caudal fin clip at Nadleh.
 
 &nbsp;
 
@@ -237,19 +237,19 @@ The Stellako site is using a 6' Rotary Screw Trap (RST) located in the lower por
 
 **Environmentals**
 
-Water temperatures are still cold in the Stellako River, on average `r round(mean(stellako.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_temp_C,na.rm=T),1)` &deg;C (Figure 1), as are air temperatures (`r round(mean(stellako.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have increased considerably since RST install (average of `r round(mean(stellako.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_gauge_m,na.rm=T),2)` m), resulting in flooding of most of the lower river channels (Figure 1). The decline on April 27 is likely an effect of Francois Lake buffering the water gauge reading, which is at the top of the Stellako River near Glenannan. 
+Water temperatures are relatively consistent in the Stellako River, on average `r round(mean(stellako.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_temp_C,na.rm=T),1)` &deg;C (Figure 1), as are air temperatures (`r round(mean(stellako.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have increased considerably since RST install (average of `r round(mean(stellako.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_gauge_m,na.rm=T),2)` m; Figure 1), resulting in flooding of most of the lower river channels and significant debris movement which has moved the RST position. 
 
 ```{r, message=F, echo=F, warning=F}
-enviro_plot(stellako.enviro, 0.2)
+enviro_plot(stellako.enviro, 0.1)
 ```
 
-*Figure 1. Water temperature (degrees Celcius) and level (meters) in the Stellako River from `r format(min(stellako.enviro$date_opened), "%b %d")` to `r format(max(stellako.enviro$date_opened), "%b %d")`, 2021. Water level data obtained from real-time Environment Canada water data online.*
+*Figure 1. Water temperature (degrees Celcius) and level (meters) in the Stellako River from `r format(min(stellako.enviro$date_opened), "%b %d")` to `r format(max(stellako.enviro$date_opened), "%b %d")`, 2021. Water level data obtained from real-time Environment Canada water data online. The decline on April 27 is likely an effect of Francois Lake buffering the water gauge reading, which is at the top of the Stellako River near Glenannan. *
 
 \newpage
 
 **Abundance and migration timing**
 
-Catches are finally increasing at Stellako (Figure 2a). Smolt migration is anticipated to around early-mid May. Variability in hourly catch is still high, but so far suggests that smolts migrate later in the night at Stellako than at Nadleh (Figure 2b). 
+Catches have remained relatively high at Stellako as we approach the anticipated migration period around early-mid May (Figure 2a). Variability in hourly catch is still high, but so far suggests that smolts migrate later in the night at Stellako than at Nadleh (Figure 2b). 
 
 ```{r, warning=F, message=F, echo=F}
 ggarrange(nightly_plot(stellako.catch, 300, 50), hourly_plot(stellako.catch), nrow=2)
@@ -273,7 +273,7 @@ Mark-recapture trials to evaluate trap efficiency have begun at Stellako (Table 
 
 &nbsp;
 
-*Table 1. Mark-release cohorts released on the Stellako River*
+*Table 1. Mark-release cohorts released in the Stellako River*
 ```{r, echo=F, warning=F, message=F}
 stella.releases <- data.frame(Date=c("May 5"), cohort_size=c(114), mark_type=c("Upper caudal clip"))
 stella.releases <- stella.releases %>%
@@ -299,10 +299,10 @@ The Nadleh program is using an 8' RST located at the Nadleh bridge, about half-w
 
 **Environmentals**
 
-Water temperatures increasing steadily in the Nadleh River, on average `r round(mean(nadleh.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_temp_C,na.rm=T),1)` &deg;C, as are air temperatures (`r round(mean(nadleh.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have also increased (average of `r round(mean(nadleh.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_gauge_m,na.rm=T),2)` m, Figure 3). Ice has now completely left Fraser Lake and no longer impacts RST operations. 
+Water temperatures are increasing steadily in the Nadleh River, on average `r round(mean(nadleh.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_temp_C,na.rm=T),1)` &deg;C, as are air temperatures (`r round(mean(nadleh.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have also increased (average of `r round(mean(nadleh.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(nadleh.enviro$water_gauge_m,na.rm=T),2)` m, Figure 3). Debris flows (branches, etc.) have increased recently, frequently clogging the RST and impacting fishing operations.  
 
 ```{r, message=F, echo=F, warning=F}
-enviro_plot(nadleh.enviro, 0.2)
+enviro_plot(nadleh.enviro, 0.1)
 ```
 
 *Figure 3. Water temperature (degrees Celcius) and level (meters) in the Nadleh River from `r format(min(nadleh.enviro$date_opened), "%b %d")` to `r format(max(nadleh.enviro$date_opened), "%b %d")`, 2021. Water level data obtained from real-time Environment Canada water data online.*
@@ -311,7 +311,7 @@ enviro_plot(nadleh.enviro, 0.2)
 
 **Abundance and migration timing**
 
-Catches have increased dramatically at Nadleh as the anticipated peak of migration approaches, estimated to be mid-late Apr but potentially as late as mid-May (Figure 4a). Peak nightly migration appears to be between 10pm and 1am, as it has been historically (Figure 4b). 
+Catches have levelled-off at Nadleh as we have now passed the latest anticipated peak of migration, early-mid May (Figure 4a). Peak nightly migration appears to be between 10pm and 1am, as it has been historically (Figure 4b). 
 
 ```{r, warning=F, message=F, echo=F}
 ggarrange(nightly_plot(nadleh.catch, 7000, 1000), hourly_plot(nadleh.catch), nrow=2)
@@ -335,7 +335,7 @@ Mark-recapture trials to evaluate trap efficiency have begun at Nadleh and will 
 
 &nbsp;
 
-*Table 2. Mark-release cohorts released on the Nadleh River*
+*Table 2. Mark-release cohorts released in the Nadleh River*
 ```{r, echo=F, warning=F, message=F}
 nadleh.releases <- data.frame(Date=c("April 28", "May 1"), cohort_size=c(421, 1220), mark_type="Lower caudal clip")
 nadleh.releases <- nadleh.releases %>%
@@ -394,7 +394,7 @@ writeData(northern_wb, sheet="Stellako hourly", x=stellako.hourly.summary)
 writeData(northern_wb, sheet="Nadleh nightly", x=nadleh.nightly.summary)
 writeData(northern_wb, sheet="Nadleh hourly", x=nadleh.hourly.summary)
 
-saveWorkbook(northern_wb, "Northern sockeye smolt programs 2021 - In-season data update #4.xlsx", overwrite = T)
+saveWorkbook(northern_wb, "Northern sockeye smolt programs 2021 - In-season data update #5.xlsx", overwrite = T)
 ```
 
 
