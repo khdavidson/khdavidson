@@ -4,9 +4,8 @@ date: "Last update: February 3, 2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE, message=F}
+```{r setup, include=FALSE, message=F, warning=F, echo=F}
 knitr::opts_chunk$set(echo = TRUE)
-setwd("~/Documents/ANALYSIS/data")
 
 library(tidyverse)
 library(egg)
@@ -20,8 +19,10 @@ library(mapdata)
 options(scipen = 9999)
 set.seed(1234)
 
+setwd("~/ANALYSIS/data")
+
 dat.raw <- read.xlsx("daily_counts.xlsx", sheet="all_stocks")
-escdb.raw <- read.xlsx("SKAll-Forecast (June 2020).xlsx", sheet="SKAll")  # will throw error. if you restart R session and rerun chunk will be OK
+escdb.raw <- read.xlsx("DFO Sockeye Escapement All Years (Feb 2021).xlsx", sheet="SKAll")  # will throw error. if you restart R session and rerun chunk will be OK
 roving.raw <- read.xlsx("Master Roving Analysis Spreadsheet.xlsx", sheet="count_data", detectDates=T)
 ```
 
@@ -124,7 +125,6 @@ pos$timing_group <- factor(pos$timing_group, levels = c("", "Early Summer", "Sum
 ###############
 # ROVING DATA #
 ###############
-
 roving.data <- roving.raw %>% 
   rename(year=Year,
     timing_group=Run.Timing,
