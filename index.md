@@ -4,7 +4,7 @@
 <br>
 <br>
 <body>Files:</body>
-<a href="northern_smolts_inseason.html">Nadleh and Stellako smolt project updates</a>
+<a href="/in-season/northern_smolts_inseason.html">Nadleh and Stellako smolt project updates</a>
 <br>
 <a href="chilko_smolts.html">Chilko smolt analysis summary</a>
 <br>
