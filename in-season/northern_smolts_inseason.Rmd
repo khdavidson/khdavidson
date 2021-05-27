@@ -1,5 +1,5 @@
 ---
-title: "**Northern sockeye smolt programs  \nIn-season update #8**"
+title: "**Northern sockeye smolt programs  \nIn-season update #9 (final)**"
 author: "Fraser Interior Area Sockeye Stock Assessment"
 date: "`r Sys.Date()`"
 output: 
@@ -237,10 +237,10 @@ The Stellako site is using a 6' Rotary Screw Trap (RST) located in the lower por
 
 **Environmentals**
 
-Water temperatures continue to increase in the Stellako River, on average `r round(mean(stellako.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_temp_C,na.rm=T),1)` &deg;C (Figure 1), as do air temperatures (`r round(mean(stellako.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have remained constant (average of `r round(mean(stellako.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_gauge_m,na.rm=T),2)` m; Figure 1). 
+Water temperatures have remained constant in the Stellako River recently, on average `r round(mean(stellako.enviro$water_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_temp_C,na.rm=T),1)` &deg;C (Figure 1), as do air temperatures (`r round(mean(stellako.enviro$air_temp_C,na.rm=T),1)`&pm;`r round(sd(stellako.enviro$air_temp_C,na.rm=T),1)` &deg;C). Water levels have continued to rise slowly but remain constanty high (average of `r round(mean(stellako.enviro$water_gauge_m, na.rm=T),1)`&pm;`r round(sd(stellako.enviro$water_gauge_m,na.rm=T),2)` m; Figure 1). 
 
 ```{r, message=F, echo=F, warning=F}
-enviro_plot(stellako.enviro, 0.1)
+enviro_plot(stellako.enviro, 0.05)
 ```
 
 *Figure 1. Water temperature (degrees Celcius) and level (meters) in the Stellako River from `r format(min(stellako.enviro$date_closed), "%b %d")` to `r format(max(stellako.enviro$date_closed), "%b %d")`, 2021. Water level data obtained from real-time Environment Canada water data online. The decline on April 27 is likely an effect of Francois Lake buffering the water gauge reading, which is at the top of the Stellako River near Glenannan. *
@@ -249,7 +249,7 @@ enviro_plot(stellako.enviro, 0.1)
 
 **Abundance and migration timing**
 
-Catches declined considerably at Stellako suggesting we are at the end of migration (Figure 2a). Variability in hourly catch is still high, but so far suggests that smolts migrate later in the night at Stellako than at Nadleh (Figure 2b). 
+Catches were 0 for the last nights of fishing at Stellako indicating migration is completely finished (Figure 2a). Variability in hourly catch is still high, but so far suggests that smolts migrate later in the night at Stellako than at Nadleh (Figure 2b). 
 
 ```{r, warning=F, message=F, echo=F}
 ggarrange(nightly_plot(stellako.catch, 400, 50), hourly_plot(stellako.catch), nrow=2)
@@ -311,7 +311,7 @@ enviro_plot(nadleh.enviro, 0.08)
 
 **Abundance and migration timing**
 
-Catches continue to decline at Nadleh which suggests we are nearing the end of the migration period (Figure 4a). Peak nightly migration appears to be between 10pm and 1am, as it has been historically (Figure 4b). 
+Catches have declined to low numbers at Nadleh; the final night of fishing yielded approximately 60 smolts which suggests migration is essentially over (Figure 4a). Peak nightly migration appears to be between 10pm and 1am, as it has been historically (Figure 4b). 
 
 ```{r, warning=F, message=F, echo=F}
 ggarrange(nightly_plot(nadleh.catch, 7000, 1000), hourly_plot(nadleh.catch), nrow=2)
@@ -355,7 +355,7 @@ knitr::kable(nadleh.releases)
 
 &nbsp;
 
-Next update will be: `r Sys.Date()+5`
+This is the last update for 2021.
 
 ```{r echo=F, warning=F, message=F, include=F}
 #*Table 1. Stellako River a) raw nightly sockeye smolt catch. Dates are based on the day the trap was closed for fishing. b) Raw hourly abundance of sockeye #smolts. Times are based on when fish were netted out of the RST live box.*
@@ -394,7 +394,7 @@ writeData(northern_wb, sheet="Stellako hourly", x=stellako.hourly.summary)
 writeData(northern_wb, sheet="Nadleh nightly", x=nadleh.nightly.summary)
 writeData(northern_wb, sheet="Nadleh hourly", x=nadleh.hourly.summary)
 
-saveWorkbook(northern_wb, "Northern sockeye smolt programs 2021 - In-season data update #8.xlsx", overwrite = T)
+saveWorkbook(northern_wb, "Northern sockeye smolt programs 2021 - In-season data update #9.xlsx", overwrite = T)
 ```
 
 
