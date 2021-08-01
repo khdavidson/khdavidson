@@ -14,21 +14,23 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readxl)    # to read in .xlsx files
 library(egg)       # for ggarrange()
-library(ggpubr)    # for stat_cor() in ggplot theme
-library(scales)    # for pretty_breaks()
-library(finalfit)  # for ff_glimpse()/missing values summaries
-library(naniar)    # for miss_var_summary()
+library(ggpubr)    # for stat_cor() in ggplot theme **(used in extended script version)
+library(scales)    # for pretty_breaks() **(used in extended script version)
+library(finalfit)  # for ff_glimpse()/missing values summaries **(used in extended script version)
+library(naniar)    # for miss_var_summary() **(used in extended script version) 
 library(car)       # for vif()
 library(MuMIn)     # for dredge(), model.avg(), predict(), etc.
-library(caret)     # for RVI (varImp())
 
+# working directory and number notation setting change
 setwd("~/ANALYSIS/data")
 options(scipen=999999)
 
-# read in data
-cal.raw <- read.csv("calibration_clean_BI02sub.csv") 
+# read in raw data
+cal.raw <- read.csv("calibration_clean_BI02sub.csv")
+# minor cleaning
 cal <- cal.raw %>%
-  mutate_at(c("size_recode", "stability_recode", "lpe_method_recode", "water_clarity_recode", "substrate_shade_recode", "lwd_recode"), as.numeric) %>%
+  mutate_at(c("size_recode", "stability_recode", "lpe_method_recode", "water_clarity_recode", "substrate_shade_recode", "lwd_recode"), 
+            as.numeric) %>%
   print()
 ```
 
@@ -69,12 +71,30 @@ These variables were used in a gamma-distributed generalized linear model (GLM) 
 
 #### **Data exploration: Multicollinearity and variable relationships** ####  
 
+In the initial global model, VIF scores were high for stream size (VIF>3; Table 1) and stream size exhibited a strong positive relationship with stream stability (r=0.72), a strong negative relationship with large woody debris ('lwd', r=-0.71), and moderate relationship with LPE method (r=0.61; Figure 1). Removal of 'size_recode' resulted in reasonable correlation values for the remaining variables (VIF<3 and r<0.6, results not shown).
+
+<br>
+
+```{r include=F, echo=F}
+#-------- MULTICOLLINEARITY:
+##### 1. VIF scores (cutoff VIF>3)
+# Fit global linear model:
+vif.stat.1 <- lm(index ~ system_stability + size_recode + water_clarity_recode + substrate_shade_recode + lwd_recode + lpe + lpe_method, data=cal)
+```
+
+<font size="2">*Table 1. Variance Inflation Factor (VIF) scores for the global model. All VIF scores were <3 once 'size_recode' was removed.*</font>
+
+```{r echo=F, warning=F, message=F}
+# VIF scores output table
+knitr::kable(dplyr::as_data_frame(vif(vif.stat.1), rownames = "Variable"))
+```
+
 ```{r echo=F, include=F}
-#-------- Pairs plot set-up and functions
+##### 2. PAIRS PLOT (cutoff r<0.6)
 z.s <- cbind(cal$index, cal$stability_recode, cal$size_recode, cal$water_clarity_recode, cal$substrate_shade_recode, cal$lwd_recode, cal$lpe, cal$lpe_method_recode)   
 colnames(z.s) <- c("index", "stability", "size", "water_clarity", "substrate_shade", "lwd", "lpe", "lpe_method")
 
-# Function for scaled correlation coefficient text in upper panels
+# Function for correlation coefficient text in upper panels, scaled slightly but size of r value (bigger text = higher r)
 panel.cor.fx <- function(x, y, digits=2, prefix="", cex.cor, ...)
 {
   usr = par("usr"); on.exit(par(usr))
@@ -98,24 +118,6 @@ panel.hist.fx <- function(x, ...)
 }
 ```
 
-In the initial global model, VIF scores were high for stream size (VIF>3; Table 1) and stream size exhibited a strong positive relationship with stream stability (r=0.72), a strong negative relationship with large woody debris ('lwd', r=-0.71), and moderate relationship with LPE method (r=0.61; Figure 1). Removal of 'size_recode' resulted in reasonable correlation values for the remaining variables (VIF<3 and r<0.6, results not shown).
-
-<br>
-
-```{r include=F, echo=F}
-#--------- VIF tests - stepwise removal of highly collinear predictors (cutoff VIF>3)
-### just static vars
-
-# global
-vif.stat.1 <- lm(index ~ system_stability + size_recode + water_clarity_recode + substrate_shade_recode + lwd_recode + lpe + lpe_method, data=cal)
-```
-
-<font size="2">*Table 1. Variance Inflation Factor (VIF) scores for the global model. All VIF scores were <3 once 'size_recode' was removed.*</font>
-
-```{r echo=F, warning=F, message=F}
-knitr::kable(dplyr::as_data_frame(vif(vif.stat.1), rownames = "Variable"))
-```
-
 ```{r echo=F, warning=F, message=F}
 pairs(z.s, lower.panel=panel.smooth, upper.panel=panel.cor.fx, diag.panel=panel.hist.fx, cex=1, pch=16)
 ```
@@ -127,6 +129,8 @@ pairs(z.s, lower.panel=panel.smooth, upper.panel=panel.cor.fx, diag.panel=panel.
 There is evidence of linear relationships between the index and most variables (Figure 2). Smoothed non-linear relationships are shown just for reference and for future considerations with GAM use, but are not considered in this GLM exercise as sample sizes are too limited. The relationships suggest GLM is acceptable for use given the current data limitations. 
 
 ```{r echo=F, include=F}
+#-------- VARIABLE RELATIONSHIPS:
+# Plot function to plot index ~ each predictor variable (except size, which was removed in the previous step) 
 relation.fx <- function(x_var, ann_x, ann_y, ann_lab, x_lab){
   ggplot(cal%>%filter(!is.na(.data[[x_var]]), !grepl("CANT", .data[[x_var]])), aes(x=.data[[x_var]], y=index)) +
     geom_point(shape=21, size=3, fill="gray70", alpha=0.6) +
@@ -146,6 +150,7 @@ relation.fx <- function(x_var, ann_x, ann_y, ann_lab, x_lab){
           axis.title = element_text(face="bold"))
 }
 
+# Create multi-plot figure (but don't plot yet...)
 relationship.plots<-ggarrange(relation.fx("system_stability", "Stable", 17, "", "Stability"),
                                relation.fx("water_clarity_recode", 1, 17, "", "Water clarity"), 
                                relation.fx("substrate_shade_recode", 1, 17, "", "Substrate shade"),
@@ -155,6 +160,7 @@ relationship.plots<-ggarrange(relation.fx("system_stability", "Stable", 17, "", 
                                common.legend = T)
 ```
 ```{r echo=F, warning=F, message=F}
+# Plot multi-plot figure with common figure caption 
 annotate_figure(relationship.plots, bottom=text_grob("Fig 2. Relationship plots for static variables following step-wise VIF variable removal. Lines are linear (green), cubic \nspline (red) and loess (blue) smoothing.", face="italic", size=9.5, hjust=0, x=0))
 ```
 
@@ -164,9 +170,17 @@ annotate_figure(relationship.plots, bottom=text_grob("Fig 2. Relationship plots 
 
 #### **Model development** ####  
 
+The following model was fit to 128 surveys, while 32 surveys were held back for validation. Top models (dAICc < 4) are shown in Table 2. The top model contained terms for large woody debris, LPE, system stability and water clarity and accounted for 34% of model weights. 
+
+```{r eval=F}
+Model formula:
+m.global <- glm(index ~ system_stability + large_woody_debris + water_clarity + substrate_shade + lpe_sc + lpe_method, data=cal.80,  family=Gamma(link="inverse"), na.action = "na.fail")
+```
+
 ```{r echo=F, include=F}
-# Randomly select 80% of data. MUST RUN set.seed(1) first for reproducibility! 
-# note addition of term from below - rescaling 'lpe'
+#--------- CREATE DATASETS
+# 1. Randomly select 80% of data. MUST RUN set.seed(1) first for reproducibility! 
+# note rescaled LPE is used here (calculated in extended script using rescale())
 set.seed(1)
 cal.80 <- cal %>% 
   slice_sample(prop=0.8) %>%
@@ -175,49 +189,34 @@ cal.80 <- cal %>%
   print()
 cal.80.names <- cal.80$usid
 
-# Filter remaining 20% of data for model validation
+# 2. Filter remaining 20% of data to save for model validation
 cal.20 <- cal %>%
   filter(!usid%in%c(cal.80.names)) %>%
   print()
 
 
 #--------- FIT MODELS
-# * model suggested re-scaling 'lpe' 
+# * note this step is where model suggested re-scaling 'lpe' in original version
 m.global <- glm(index ~ system_stability + large_woody_debris + water_clarity + substrate_shade + lpe_sc + lpe_method, data=cal.80,  family=Gamma(link="inverse"), na.action = "na.fail")
 summary(m.global)
 
-# Run all combinations of models
+# Run and fit all combinations of models
 m.dredge <- dredge(m.global, beta="none", rank="AICc")
 summary(m.dredge)
 
 
 #--------- EVALUATE MODELS
-# 1.1. TOP MODELS: dAIC<4  
+# 1.1. EXTRACT SET OF TOP MODELS: dAIC<4  
 model.sel.dAIC4 <- get.models(m.dredge, subset=delta<4)                    # note essentially identical outcome with weight<=0.95
 models4 <- model.sel(model.sel.dAIC4)
-# 1.2. MODEL-AVERAGE TOP MODELS: dAIC<4
+model.table.dAIC4 <- subset(m.dredge, delta<4)                             # just model table for different viewing options
+# 1.2. MODEL-AVERAGE THE SET OF TOP MODELS: dAIC<4
 model.avg.dAIC4 <- model.avg(model.sel.dAIC4)
 
-# 2. TOP MODEL: dAIC=0
+# 2. EXTRACT TOP MODEL: dAIC=0
 model.sel.top <- get.models(m.dredge, subset=1)
-m.top <- glm(index ~ large_woody_debris + lpe_sc + system_stability + water_clarity, data=cal.80, family=Gamma(link="inverse"), na.action="na.fail")
-
-# Model tables for visualizing
-model.table.dAIC4 <- subset(m.dredge, delta<4)
-model.table.top <- subset(m.dredge, subset=1)
-
-
-#--------- PREDICT/VALIDATE MODEL
-# Based on model-averaged parameters: 
-cal.20$index_avgmod4 <- predict(model.avg.dAIC4, type="link", backtransform=T, full=F, cal.20)
-cal.20$index_topmod <- predict(m.top, type="link", backtransform=T, full=T, cal.20)
-```
-
-The following model was fit to 128 surveys, while 32 surveys were held back for validation. Top models (dAICc < 4) are shown in Table 2. The top model contained terms for large woody debris, LPE, system stability and water clarity and accounted for 34% of model weights. 
-
-```{r eval=F}
-Model formula:
-m.global <- glm(index ~ system_stability + large_woody_debris + water_clarity + substrate_shade + lpe_sc + lpe_method, data=cal.80,  family=Gamma(link="inverse"), na.action = "na.fail")
+m.top <- glm(index ~ large_woody_debris + lpe_sc + system_stability + water_clarity, data=cal.80, family=Gamma(link="inverse"), na.action="na.fail")                                                      # explore specific fit details 
+model.table.top <- subset(m.dredge, subset=1)                             # just model table for different viewing options
 ```
 
 <br>
@@ -225,6 +224,7 @@ m.global <- glm(index ~ system_stability + large_woody_debris + water_clarity + 
 <font size="2">*Table 2. Set of top models with dAICc ("delta") < 4.*</font>
 
 ```{r echo=F, warning=F, message=F}
+# Top models table
 knitr::kable(cbind("Model"=row.names(models4), dplyr::as_data_frame(models4)%>%select(-family)))
 ```
 
@@ -237,6 +237,7 @@ The model-averaged set of top models indicated that large woody debris, LPE and 
 <font size="2"> *Table 3. Relative variable importance of variables included in the model-averaged set of top models (dAICc < 4).*</font>
 
 ```{r echo=F, warning=F, message=F}
+# RVI table
 knitr::kable(cbind("Variable name"=rownames(as.data.frame(cbind(model.avg.dAIC4$sw))),
                    as.data.frame(cbind(model.avg.dAIC4$sw),row.names=F)%>%rename(`Relative importance`=V1)))
 ```
@@ -246,15 +247,21 @@ knitr::kable(cbind("Variable name"=rownames(as.data.frame(cbind(model.avg.dAIC4$
 <span style="text-decoration:underline"> **Model validation** </span>
 
 ```{r echo=F, include=F}
-####### Plot background work, not shown ###
-# PLOT PREDICTIONS: INDICES AND POPULATION SIZES
-# Implications of "true" population size (HPE) vs. resulting 1.8-expanded HPE and model-expanded HPE
+#--------- PREDICT/VALIDATE
+##### 1.1. PREDICT indecies based on model-averaged parameters: 
+cal.20$index_avgmod4 <- predict(model.avg.dAIC4, type="link", backtransform=T, full=F, cal.20)
+
+# 1.2. PREDICT indecies based on top model parameters: 
+cal.20$index_topmod <- predict(m.top, type="link", backtransform=T, full=T, cal.20)
+
+# CALCULATE resulting population sizes:
 cal.20 <- cal.20 %>% 
   mutate(pop_est_18 = lpe*1.8,
          pop_est_avgmod4 = lpe*index_avgmod4,
          pop_est_topmod = lpe*index_topmod)
 
-# PLOT PREDICTIONS: DIFFERENCES BETWEEN ESTIMATES
+
+##### 2. DIFFERENCES BETWEEN ESTIMATES
 DBEs <- cal.20 %>%
   dplyr::select(usid, n_row, hpe, pop_est_18, pop_est_avgmod4) %>%
   pivot_longer(cols=c(pop_est_18, pop_est_avgmod4), names_to = "expand_type", values_to = "pop_est") %>%
@@ -262,6 +269,7 @@ DBEs <- cal.20 %>%
          pDBE=(difference/hpe)*100) %>%
   print()
 
+# Plot # of fish differences between the 1.8 population estimate and the model-averaged population estimate
 dDBE<-ggplot(DBEs, aes(x=factor(n_row), y=difference, group=expand_type, fill=expand_type)) +
   geom_hline(yintercept = 0, colour="black") +
   geom_bar(stat="identity", position="dodge", width=0.5) +
@@ -276,6 +284,7 @@ dDBE<-ggplot(DBEs, aes(x=factor(n_row), y=difference, group=expand_type, fill=ex
         legend.title = element_text(size=9, face="bold"),
         axis.text = element_text(colour="black")) 
 
+# Plot % of population implied by the # of fish differences between the 1.8 population estimate and the model-averaged population estimate
 pDBE<-ggplot(DBEs, aes(x=factor(n_row), y=pDBE, group=expand_type, fill=expand_type)) +
   geom_hline(yintercept = 0, colour="black") +
   geom_bar(position="dodge", stat="identity", width=0.5) +
@@ -287,7 +296,9 @@ pDBE<-ggplot(DBEs, aes(x=factor(n_row), y=pDBE, group=expand_type, fill=expand_t
         axis.text = element_text(colour="black"),
         axis.title = element_text(face="bold"))
 
-# Summary stats: # cases where model was best based on # fish (not proportion - but gives the same result in this case)
+
+##### 3. SUMMARY STATS: 
+# cases where model was best based on # fish (not proportion - but gives the same result in this case)
 winners <- DBEs %>%
   group_by(usid) %>%
   mutate(winner = ifelse(min(difference)==difference, "WIN", ""))%>%
@@ -318,6 +329,7 @@ ggplot() +
 <br>
 
 ```{r echo=F, warning=F, message=F}
+# Plot based on plots defined above
 ggarrange(dDBE, pDBE, nrow=2)
 ```
 
