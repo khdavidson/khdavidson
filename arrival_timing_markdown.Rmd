@@ -10,8 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(egg)
 library(ggridges)
-library(xlsx)
-library(openxlsx)
+library(readxl)
 library(ggmap)
 library(maps)
 library(mapdata)
@@ -21,9 +20,9 @@ set.seed(1234)
 
 setwd("~/ANALYSIS/data")
 
-dat.raw <- read.xlsx("daily_counts.xlsx", sheet="all_stocks")
-escdb.raw <- read.xlsx("DFO Sockeye Escapement All Years (Feb 2021).xlsx", sheet="SKAll")  # will throw error. if you restart R session and rerun chunk will be OK
-roving.raw <- read.xlsx("Master Roving Analysis Spreadsheet.xlsx", sheet="count_data", detectDates=T)
+dat.raw <- read_excel("daily_counts.xlsx", sheet="all_stocks")
+escdb.raw <- read_excel("SKAll-Forecast (June 2020).xlsx", sheet="SKAll") 
+roving.raw <- read_excel("Master Roving Analysis Spreadsheet.xlsx", sheet="count_data")
 ```
 
 ```{r, echo=F, include=F, warning=F, message=F}
@@ -45,10 +44,10 @@ daily.data <- dat.raw %>%
 ############################################
 pos.raw <- escdb.raw %>% 
   rename(year=Year,
-    watershed_group=Watershed.Group.Name,
-    stock=`Stock.Name(stream)`,
-    timing_group=Timing.Group,
-    cu=CU.Name,
+    watershed_group=`Watershed Group Name`,
+    stock=`Stock Name(stream)`,
+    timing_group=`Timing Group`,
+    cu=`CU Name`,
     peak_spawn=spnpeak,
     total=Total,
     forecast_group=Forecast) %>%
@@ -127,32 +126,32 @@ pos$timing_group <- factor(pos$timing_group, levels = c("", "Early Summer", "Sum
 ###############
 roving.data <- roving.raw %>% 
   rename(year=Year,
-    timing_group=Run.Timing,
-    watershed_group=Watershed.Group,
+    timing_group=`Run Timing`,
+    watershed_group=`Watershed Group`,
     system=`Stream/Shore`,
-    survey=`Survey.#`,
+    survey=`Survey #`,
     date=Date,
-    survey_type=Survey.Type,
+    survey_type=`Survey Type`,
     area=Area,
-    area_descr=Area.Description,
-    live_obs1=Live.Count.1,
-    live_obs2=Live.Count.2,
-    oe=`Obs..Eff.`,
+    area_descr=`Area Description`,
+    live_obs1=`Live Count 1`,
+    live_obs2=`Live Count 2`,
+    oe=`Obs. Eff.`,
     hold_perc=`%Hold`,
     spawn_perc=`%Spawning`,
     spawnout_perc=`%SpawnedOut`,
-    carc_male=Carcass.Male,
-    carc_fem=Carcass.Female,
-    male_nr=Male.Carcass.NR,
-    fem_nr=Female.Carcass.NR,
-    fem_0=`Female.Carcass.0%`,
-    fem_50=`Female.Carcass.50%`,
-    fem_100=`Female.Carcass.100%`,
-    carc_jack=Carcass.Jack,
-    carc_unsex_ground=Ground.Carcass.Unsexed,
-    carc_unsex_aerial1=Aerial.Carcass.Unsexed.Observer.1,
-    carc_unsex_aerial2=Aerial.Carcass.Unsexed.Observer.2,
-    carc_unsex=`Carcass.Unsexed.(interpret."blank".as.zero.carcasses)`) %>% 
+    carc_male=`Carcass Male`,
+    carc_fem=`Carcass Female`,
+    male_nr=`Male Carcass NR`,
+    fem_nr=`Female Carcass NR`,
+    fem_0=`Female Carcass 0%`,
+    fem_50=`Female Carcass 50%`,
+    fem_100=`Female Carcass 100%`,
+    carc_jack=`Carcass Jack`,
+    carc_unsex_ground=`Ground Carcass Unsexed`,
+    carc_unsex_aerial1=`Aerial Carcass Unsexed Observer 1`,
+    carc_unsex_aerial2=`Aerial Carcass Unsexed Observer 2`,
+    carc_unsex=`Carcass Unsexed (interpret "blank" as zero carcasses)`) %>% 
   mutate(date=as.Date(date)) %>% 
   print()
 ```
@@ -345,6 +344,40 @@ ggplot(data=pos, aes(x=as.Date(start_yday, origin = as.Date("1970-01-01")), xend
 ```
 
 *Figure 3. Peak of spawn ranges for all available stocks and years from 2000-2019 (2020 not yet included in the DFO escapement database).*
+
+<br>
+
+```{r, echo=F, message=F, warning=F}
+ggplot(data=pos%>%filter(cu=="Quesnel - Summer", grepl("hore", stock))%>%mutate(group=ifelse(year%in%c("2013", "2017"), "recent 2 gens", "Historical")), 
+       aes(x=as.Date(start_yday, origin = as.Date("1970-01-01")), xend=as.Date(end_yday, origin = as.Date("1970-01-01")), 
+           y=reorder(stock, desc(stock)), yend=reorder(stock, desc(stock)), 
+           colour=group, alpha=group, size=group)) +
+  geom_segment(stat="identity") +
+  scale_colour_manual(name="Peak of spawn", breaks=c("recent 2 gens", "Historical"), values=c("#00b8ff", "gray60")) +
+  scale_alpha_manual(name="Peak of spawn", breaks=c("recent 2 gens", "Historical"), values=c(0.6, 0.35)) +
+  scale_size_manual(name="Peak of spawn", breaks=c("recent 2 gens", "Historical"), values=c(2.5, 2)) +
+  scale_x_date(date_labels = "%b %d", date_breaks="10 day") +
+  labs(x="", y="") +
+  theme_bw() +
+  theme(panel.grid.major.x = element_line(colour="gray85"),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.y = element_line(colour="gray85"),
+    panel.spacing = unit(0, "lines"),
+    axis.title.y = element_text(face="bold"),
+    axis.text.y = element_text(colour="black", size=8),
+    axis.text.x = element_text(colour="black", angle=30, hjust=1, size=10),
+    legend.position = c(0.86, 0.81),
+    legend.background = element_rect(colour="black"),
+    legend.margin=margin(t=0.1, r=0.25, b=0.1, l=0.1, unit="cm"),
+    legend.spacing.y = unit(0.2, "cm"),
+    legend.title = element_text(face="bold", size=10),
+    legend.text = element_text(size=9),
+    strip.placement = "outside",                     
+    strip.background = element_rect(fill = "white", colour="white"),
+    strip.text.y = element_text(angle=90, colour="black", face="bold", size=11)) 
+```
+
+*Quesnel peak of spawn.*
 
 <br>
 
