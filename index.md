@@ -1,10 +1,10 @@
 <body>Here are progress resports/updates and documentation on recent side project work.</body>     
 <br>
-<body>Last update: May 7, 2021</body>
+<body>Last update: June 9, 2021</body>
 <br>
 <br>
 <body>Files:</body>
-<a href="/in-season/northern_smolts_inseason.html">Nadleh and Stellako smolt project updates</a>
+<a href="northern_smolts_inseason.html">Nadleh and Stellako smolt project updates</a>
 <br>
 <a href="chilko_smolts.html">Chilko smolt analysis summary</a>
 <br>
